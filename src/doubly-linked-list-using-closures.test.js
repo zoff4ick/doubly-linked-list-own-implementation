@@ -1,67 +1,1 @@
-// todo rework tests
-
-const { expect } = require('chai');
-
-const { createList } = require('./doubly-linked-list-using-closures');
-
-describe('Doubly Linked List on closures', () => {
-  it('should insert nodes correctly', () => {
-    const list = createList();
-
-    list.push('first');
-    list.push('second');
-    list.push('third');
-
-    const result = [];
-    for (const item of list) {
-      result.push(item);
-    }
-
-    expect(result).to.deep.equal(['first', 'second', 'third']);
-  });
-
-  it('should reset tail and head correctly on list devastation', () => {
-    const list = createList();
-
-    list.push('first');
-    list.push('second');
-
-    list.pull();
-    list.pull();
-
-    expect(list.getHead()).to.equal(null);
-    expect(list.getTail()).to.equal(null);
-  });
-
-  it('should remove tail correctly', () => {
-    const list = createList();
-
-    list.push('first');
-    list.push('second');
-    list.push('third');
-
-    expect(list.pull()).to.equal('third');
-
-    const result = [];
-    for (const item of list) {
-      result.push(item);
-    }
-
-    expect(result).to.deep.equal(['first', 'second']);
-  });
-
-  it('should handle empty list gracefully', () => {
-    const list = createList();
-
-    expect(list.pull()).to.equal(null);
-  });
-
-  it('should handle single node list', () => {
-    const list = createList();
-
-    list.push('only');
-
-    expect(list.pull()).to.equal('only');
-    expect([...list]).to.deep.equal([]);
-  });
-});
+// todo add more test for other list's methodsconst {expect} = require('chai');const {createList} = require('./doubly-linked-list-using-closures');describe('Doubly Linked List on closures', () => {  describe('push', () => {    it('should insert nodes correctly', () => {      const list = createList();      expect(list.getSize()).to.equal(0);      list.push('first');      list.push('second');      list.push('third');      const result = [];      for (const item of list) {        result.push(item);      }      expect(result).to.deep.equal(['first', 'second', 'third']);      expect(list.getSize()).to.equal(3);    });  });  describe('clone', () => {    it('should clone empty list correctly', () => {      const list = createList();      const clone = list.clone();      const result = [...list];      const result1 = [...clone];      expect(list).to.not.equal(clone);      expect(list.getSize()).to.equal(0);      expect(clone.getSize()).to.equal(0);      expect(result).to.deep.equal(result1);    });    it('should clone non-empty list of primitive values correctly', () => {      const list = createList();      list.push('newValue');      list.push('additionalValue');      const clone = list.clone();      const result = [...list];      const result1 = [...clone];      expect(list).to.not.equal(clone);      expect(list.getSize()).to.equal(2);      expect(clone.getSize()).to.equal(2);      expect(result).to.deep.equal(result1);    });  });  describe('indexOf', () => {    it('should return -1 if element wasn\'t found', () => {      const list = createList();      list.push(1);      list.push(2);      list.push(3);      const indexOfResult = list.indexOf(5);      expect(indexOfResult).to.equal(-1);    });    it('should return element\' index if element was found', () => {      const list = createList();      list.push(1);      list.push(2);      list.push(3);      const indexOfResult = list.indexOf(3);      expect(indexOfResult).to.equal(2);    });    it('shouldn\'t do deep comparison', () => {      const obj = {a: 81};      const list = createList();      list.push({a: 45});      list.push({a: 54});      list.push({a: 25});      list.push(obj);      const indexOfResult = list.indexOf({a: 45});      const indexOfResult1 = list.indexOf(obj);      expect(indexOfResult).to.equal(-1);      expect(indexOfResult1).to.equal(3);    });  });  describe('find', () => {    it('should find element if correct function is provided and element exist in list', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const foundPrimitiveValue = list.find((e) => e === 7);      const anotherList = createList();      anotherList.push({name: 'zero'});      anotherList.push({name: 'one'});      anotherList.push({name: 'two'});      const foundReferenceValue = anotherList.find((e) => e.name === 'two');      expect(foundPrimitiveValue).to.equal(7);      expect(foundReferenceValue).to.deep.equal({name: 'two'});    });    it('should return undefined if list is empty or non object matched function conditions', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const foundPrimitiveValue = list.find((e) => e === 10);      const anotherList = createList();      anotherList.push({name: 'zero'});      anotherList.push({name: 'one'});      anotherList.push({name: 'two'});      const foundReferenceValue = anotherList.find((e) => e.name === 'nobody');      const emptyList = createList();      const emptyListResult = emptyList.find((e) => e === 'someValue');      expect(foundPrimitiveValue).to.equal(undefined);      expect(foundReferenceValue).to.equal(undefined);      expect(emptyListResult).to.equal(undefined);    });  });  describe('includes', () => {    it('should return true if list includes element', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const doesListIncludePrimitiveValue = list.includes(7);      const anotherList = createList();      const someObjectToReferTo = {name: 'one'};      anotherList.push({name: 'zero'});      anotherList.push(someObjectToReferTo);      anotherList.push({name: 'two'});      const doesAnotherListIncludeReferenceValue = anotherList.includes(someObjectToReferTo);      expect(doesListIncludePrimitiveValue).to.equal(true);      expect(doesAnotherListIncludeReferenceValue).to.equal(true);    });    it('should return false if list doesn\'t include element', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const doesListIncludePrimitiveValue = list.includes(10);      const anotherList = createList();      anotherList.push({name: 'zero'});      anotherList.push({name: 'one'});      anotherList.push({name: 'two'});      const doesAnotherListIncludeReferenceValue = anotherList.includes({name: 'two'});      const emptyList = createList();      const doesEmptyListIncludeSomeValue = emptyList.includes('someValue');      expect(doesListIncludePrimitiveValue).to.equal(false);      expect(doesAnotherListIncludeReferenceValue).to.equal(false);      expect(doesEmptyListIncludeSomeValue).to.equal(false);    });  });  describe('map', () => {    it('should return new empty list if used on empty list', () => {      const list = createList();      const newList = list.map((e) => e.name);      expect(list).to.not.equal(newList);      expect(newList.getSize()).to.equal(0);    });    it('should return new list with updated values if function-modifier was passed', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const listWithUpdatedValues = list.map((e) => (e + 2));      expect(listWithUpdatedValues).to.not.equal(list);      expect(listWithUpdatedValues.getSize()).to.equal(3);      expect([...listWithUpdatedValues]).to.deep.equal([3, 9, 7]);    });    it('should return new list with undefined values if function-modifier doesn\'t return any value', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const listWithUpdatedValues = list.map((e) => {/* any code here*/});      expect(listWithUpdatedValues).to.not.equal(list);      expect(listWithUpdatedValues.getSize()).to.equal(3);      expect([...listWithUpdatedValues]).to.deep.equal([undefined, undefined, undefined]);    });  });  describe('map', () => {    it('should return new empty list if used on empty list', () => {      const list = createList();      const newList = list.map((e) => e.name);      expect(list).to.not.equal(newList);      expect(newList.getSize()).to.equal(0);    });    it('should return new list with updated values if function-modifier was passed', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const listWithUpdatedValues = list.map((e) => (e + 2));      expect(listWithUpdatedValues).to.not.equal(list);      expect(listWithUpdatedValues.getSize()).to.equal(3);      expect([...listWithUpdatedValues]).to.deep.equal([3, 9, 7]);    });    it('should return new list with undefined values if function-modifier doesn\'t return any value', () => {      const list = createList();      list.push(1);      list.push(7);      list.push(5);      const listWithUpdatedValues = list.map((e) => {/* any code here*/});      expect(listWithUpdatedValues).to.not.equal(list);      expect(listWithUpdatedValues.getSize()).to.equal(3);      expect([...listWithUpdatedValues]).to.deep.equal([undefined, undefined, undefined]);    });  });  describe('compare', () => {    it('should compare two empty lists correctly', () => {      const list1 = createList();      const list2 = createList();      const result = list1.compare(list2);      expect(result).to.equal(true);    });    it('should compare two lists with equal primitive data correctly', () => {      const list1 = createList();      const list2 = createList();      list1.push(1);      list1.push(2);      list2.push(1);      list2.push(2);      const result = list1.compare(list2);      expect(result).to.equal(true);    });    it('should compare two lists with different primitive data correctly', () => {      const list1 = createList();      const list2 = createList();      list1.push(2);      list1.push(3);      list2.push(1);      list2.push(2);      const result = list1.compare(list2);      expect(result).to.equal(false);    });    it('should compare two lists with different size correctly', () => {      const list1 = createList();      const list2 = createList();      list1.push(1);      list2.push(1);      list2.push(2);      const result = list1.compare(list2);      expect(result).to.equal(false);    });    it('should compare two lists with equal reference data correctly', () => {      const list1 = createList();      const list2 = createList();      const obj1 = {someData: 'someData'};      const obj2 = {someData: 'moreData'};      list1.push(obj1);      list1.push(obj2);      list2.push(obj1);      list2.push(obj2);      const result = list1.compare(list2);      expect(result).to.equal(true);    });    it('should not support deepEqual compare', () => {      const list1 = createList();      const list2 = createList();      list1.push({someData: 'someData'});      list1.push({someData: 'moreData'});      list2.push({someData: 'someData'});      list2.push({someData: 'moreData'});      const result = list1.compare(list2);      expect(result).to.equal(false);    });  });  describe('#insert', () => {    it('should insert node in empty list correctly', () => {      const list = createList();      expect(list.getSize()).to.equal(0);      list.insert(0, 'newFirst');      const result = [];      for (const item of list) {        result.push(item);      }      expect(result).to.deep.equal(['newFirst']);      expect(list.getSize()).to.equal(1);    });    it('should insert first node correctly', () => {      const list = createList();      expect(list.getSize()).to.equal(0);      list.push('first');      list.push('second');      list.push('third');      list.insert(0, 'newFirst');      const result = [];      for (const item of list) {        result.push(item);      }      expect(result).to.deep.equal(['newFirst', 'first', 'second', 'third']);      expect(list.getSize()).to.equal(4);    });    it('should insert last node correctly', () => {      const list = createList();      list.push('first');      list.push('second');      list.push('third');      list.insert(list.getSize() - 1, 'newFirst');      const result = [];      for (const item of list) {        result.push(item);      }      expect(result).to.deep.equal(['first', 'second', 'newFirst', 'third']);    });    it('should insert node between two nodes correctly', () => {      const list = createList();      list.push('first');      list.push('second');      list.insert(1, 'between');      const result = [];      for (const item of list) {        result.push(item);      }      expect(result).to.deep.equal(['first', 'between', 'second']);    });    it('should insert node on out of index to the tail', () => {      const list = createList();      list.push('first');      list.push('second');      list.push('third');      list.insert(list.getSize() - 1, 'newFirst');      const result = [];      for (const item of list) {        result.push(item);      }      expect(result).to.deep.equal(['first', 'second', 'newFirst', 'third']);    });  });});

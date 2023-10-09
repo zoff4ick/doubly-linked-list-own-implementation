@@ -1,23 +1,52 @@
-// const node = (data) => {
-//   let prev = null;
-//   const element = (data) => {
-//     const next = node(data);
-//     next.prev = element;
-//     return next;
-//   };
-//   element.data = data;
-//   element.prev = () => prev;
-//
-//   return element;
-// };
+const createNode = (data, prev = null, next = null) => ({data, prev, next});
 
 const createList = () => {
   let head = null;
   let tail = null;
   let size = 0;
 
-  const getHead = () => (head === null ? head : head.data);
-  const getTail = () => (tail === null ? tail : tail.data);
+  // index of actual element
+  const isElementIndex = (index) => typeof index === 'number' && index >= 0 && index < size;
+  // index of position where element could be set
+  const isPositionIndex = (index) => typeof index === 'number' && index >= 0 && index <= size;
+
+  const checkElementIndexDecorator = (f) => {
+    return (index, ...args) => {
+      if (!isElementIndex(index)) {
+        throw new Error('Index is out of range...');
+      }
+
+      return f(index, ...args);
+    }
+  }
+
+  const checkPositionIndexDecorator = (f) => {
+    return (index, ...args) => {
+      if (!isPositionIndex(index)) {
+        throw new Error('Index is out of range...');
+      }
+
+      return f(index, ...args);
+    }
+  };
+
+  const getIterator = () => ({
+          [Symbol.iterator]: () => {
+      let current = head;
+
+      return {
+        next: () => {
+          if (current === null) {
+            return {done: true};
+          } else {
+            const {data} = current;
+            current = current.next;
+            return {done: false, value: data}
+          }
+        }
+      }
+    }
+  });
 
   const getNode = (index) => {
     if (size === 0) return null;
@@ -51,139 +80,231 @@ const createList = () => {
     }
   }
 
-  // todo rework
+  const indexOf = (data) => {
+    if (size === 0) return -1;
+
+      let current = head;
+      let i = 0;
+
+      while (i <= size - 1) {
+        if (current.data === data) {
+          return i;
+        }
+
+        current = current.next;
+        i++;
+      }
+
+      return -1;
+  }
+
+  const unlink = (node) => {
+    const {data, prev, next} = node;
+    node.data = null;
+    node.next = null;
+    node.prev = null;
+
+    if (!prev) {
+      head = next;
+    } else {
+      prev.next = next;
+    }
+
+    if (!next) {
+      tail = prev;
+    } else {
+      next.prev = prev;
+    }
+
+    size--;
+    return data;
+  }
+
+  const _insertFirstNode = (data) => {
+    if (!(size === 0 && head === null && tail === null)) {
+      throw new Error('_insertFirstNode was called on non-empty list');
+    }
+
+    const firstNode = createNode(data);
+    head = firstNode;
+    tail = firstNode;
+    size++;
+  }
+
   const push = (value) => {
-    const node = {data: value};
+    if (size === 0) return _insertFirstNode(value);
+    const currentTail = tail;
+    const newTail = createNode(value, currentTail);
+    currentTail.next = newTail;
 
-    if (!head && !tail) {
-      head = node;
-      tail = node;
-
-      node.prev = null;
-      node.next = null;
-    } else {
-      const currentTailElement = tail;
-      node.prev = currentTailElement;
-      node.next = null;
-      currentTailElement.next = node;
-      tail = node;
-    }
+    tail = newTail;
     size++;
   };
 
-  // todo rework
-  const unshift = (value) => {
-    const node = {data: value};
-
-    if (!head && !tail) {
-      head = node;
-      tail = node;
-
-      node.prev = null;
-      node.next = null;
-    } else {
-      const currentHead = head;
-      currentHead.prev = node;
-      node.next = currentHead;
-      node.prev = null;
-    }
-
-    size++;
-  };
-
-  // todo rework
-  const pull = () => {
-    const currentTailElement = tail;
-
-    if (!currentTailElement) {
+  const pop = () => {
+    const node = tail;
+    if (node === null) {
       return null;
     }
 
-    const prevElement = currentTailElement.prev;
+    const {data, prev} = node;
+    node.data = null;
+    node.next = null;
+    node.prev = null;
 
-    if (!prevElement) {
-      tail = null;
+    tail = prev;
+
+    if (tail === null) {
       head = null;
     } else {
-      prevElement.next = null;
+      tail.next = null;
     }
 
-    tail = prevElement;
-    const {data} = currentTailElement;
-
-    currentTailElement.prev = null;
-    currentTailElement.data = null;
-
     size--;
-
     return data;
   };
 
-  // todo rework
-  const insert = (index, data) => {
-    // deprecated implementation beginning
+  const unshift = (value) => {
+    if (size === 0) return _insertFirstNode(value);
+    const currentHead = head;
+    const newHead = createNode(value, null, currentHead);
+    currentHead.prev = newHead;
 
-    // let properIndexToInsertAt = index < size ? index : (size - 1 > 0 ? size - 1 : 0) // todo handle case with index out of range differently (add some common logic for all functions where its needed)
-    // let current = head;
-    // let target = null;
-    // let i = 0;
+    head = newHead;
+    size++;
+  };
 
-    // const newNode = {data};
+  const shift = () => {
+    const node = head;
 
-    // todo handle case with empty list differently (we need the common implementation for all insert-like functions (such as insert, push (append), unshift (prepend)
-    // if (head === null && tail === null && properIndexToInsertAt === 0) {
-    //   return push(data);
-    // }
-
-    // while (i < properIndexToInsertAt) {
-    //   if (!current) {
-    //     throw new Error('Wrong index was used! Index cannot be greater than current list size');
-    //   }
-    //
-    //   current = current.next;
-    //   i++;
-    // }
-
-    // deprecated implementation end
-
-    if (index === 0) {
-      // todo call .unshift()
+    if (node === null) {
+      return null;
     }
 
-    if (index === size - 1) {
-      // todo call .push()
-    }
+    const {data, next} = node;
+    node.data = null;
+    node.next = null;
+    node.prev = null;
 
-    const newNode = {data};
-    const currentNodeOnIndex = getNode(index);
-    newNode.prev = currentNodeOnIndex.prev;
-    newNode.next = currentNodeOnIndex;
+    head = next;
 
-    if (currentNodeOnIndex.prev) {
-      currentNodeOnIndex.prev.next = newNode;
+    if (next === null) {
+      tail = null;
     } else {
-      head = newNode;
+      next.prev = null;
     }
 
+    size--;
+    return data;
+  }
+
+  const insert = (index, data) => {
+    if (index === 0) {
+      return unshift(data);
+    }
+
+    if (index === size) {
+      return push(data);
+    }
+
+    const currentNodeOnIndex = getNode(index);
+    const newNode = createNode(data, currentNodeOnIndex.prev, currentNodeOnIndex);
+
+    currentNodeOnIndex.prev.next = newNode;
     currentNodeOnIndex.prev = newNode;
     size++;
   }
 
   const getSize = () => size;
 
-  // todo rework
-  const listData = {
-    getHead,
-    getTail,
-    push,
-    pull,
-    insert,
-    getSize,
-    unshift
-  };
+  const clone = () => {
+    const list = createList();
 
-  // todo check does it need to be reworked
-  listData.returnReverseIterator = () => ({
+    if (size === 0) {
+      return list;
+    }
+
+    for (const item of getIterator()) {
+      list.push(item);
+    }
+
+    return list;
+  }
+
+  const find = (f) => {
+    if (typeof f !== 'function') {
+      throw new Error("Invalid data was provided as argument; Expected a function")
+    }
+
+    for (const data of getIterator()) {
+      if (f(data)) {
+        return data;
+      }
+    }
+  }
+
+  const filter = (f) => {
+    if (typeof f !== 'function') {
+      throw new Error("Invalid data was provided as argument; Expected a function")
+    }
+
+    const list = createList();
+
+    for (const data of getIterator()) {
+      if (f(data)) {
+        list.push(data);
+      }
+    }
+
+    return list;
+  }
+
+  const includes = (data) => {
+    for (const nodeData of getIterator()) {
+      if (nodeData === data) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  const map = (f) => {
+    if (typeof f !== 'function') {
+      throw new Error("Invalid data was provided as argument; Expected a function")
+    }
+
+    const list = createList();
+    for (const nodeData of getIterator()) {
+      list.push(f(nodeData));
+    }
+
+    return list;
+  }
+
+  // doesn't do deepCompare for nodes with reference types
+  const compare = (comparable) => {
+    if (comparable.getSize() !== size) {
+      return false;
+    }
+
+    const iterator = getIterator()[Symbol.iterator]();
+    let i = 0;
+    let currentElement = iterator.next();
+
+    for (const value of comparable) {
+      if (value !== currentElement.value) {
+        return false;
+      }
+
+      currentElement = iterator.next();
+      i++;
+    }
+
+    return true;
+  }
+
+  const returnReverseIterator = () => ({
     [Symbol.iterator]: () => {
       let current = tail;
 
@@ -201,93 +322,51 @@ const createList = () => {
     }
   })
 
-  // todo rework
-  listData.delete = (index, count) => {
-    let current = head;
-    let target = null;
-    let i = 0;
-
+  const deleteNodes = (index, count = 1) => {
+    // to prevent cases with out of range for later indexes
     let countToDelete = count > size - index ? size - index : count;
 
     if (head === null && tail === null && index === 0) {
       return;
     }
 
-    // todo add size property to list, be sure that index won't be greater than list's size
-    while (i < index) {
-      if (!current) {
-        throw new Error('Wrong index was used! Index cannot be greater than current list size');
-      }
-
-      current = current.next;
-      i++;
+    if (count === 1 && index === 0) {
+      return shift();
     }
 
-    let nodeToDelete = current;
-    // const {prev} = currentNodeOnIndex;
-    // const prevNodeOfCurrent = currentNodeOnIndex.prev;
-    const {prev: startOfTheGap} = nodeToDelete;
+    if (count === 1 && index === size - 1) {
+      return pop();
+    }
+
+    let nodeToDelete = getNode(index);
 
     for (let i = 0; i < countToDelete; i++) {
       if (!nodeToDelete) return;
       const {next} = nodeToDelete;
-      nodeToDelete.prev = null;
-      nodeToDelete.next = null;
-      nodeToDelete.data = null;
+      unlink(nodeToDelete);
       nodeToDelete = next;
-      size--;
-
-      if (i === countToDelete - 1) {
-        const endOfTheGap = nodeToDelete;
-        if (endOfTheGap) {
-          endOfTheGap.prev = startOfTheGap;
-        } else if (startOfTheGap) {
-          tail = startOfTheGap;
-        }
-        if (startOfTheGap) {
-          startOfTheGap.next = endOfTheGap;
-          if (!startOfTheGap.next) {
-            head = startOfTheGap;
-          }
-        } else {
-          head = endOfTheGap;
-        }
-      }
-    }
-
-    // currentNodeOnIndex.prev = newNode;
-    //
-    // if (prev) {
-    //   prev.next = newNode;
-    // } else if (head === currentNodeOnIndex) {
-    //   head = newNode;
-    // }
-    //
-    // newNode.prev = prev;
-    // newNode.next = currentNodeOnIndex;
-  }
-
-  // todo check does it need to be reworked
-  listData[Symbol.iterator] = () => {
-    let current = head;
-
-    return {
-      next: () => {
-        if (current === null) {
-          return {done: true};
-        } else {
-          const {data} = current;
-          current = current.next;
-          return {done: false, value: data}
-        }
-      }
     }
   }
 
-  listData.getNode = getNode;
 
-
-  return listData;
+  return {
+    push,
+    pop,
+    unshift,
+    shift,
+    insert: checkPositionIndexDecorator(insert),
+    deleteNodes: checkElementIndexDecorator(deleteNodes),
+    indexOf,
+    includes,
+    getSize,
+    compare,
+    find,
+    filter,
+    map,
+    clone,
+    returnReverseIterator,
+    [Symbol.iterator]: getIterator()[Symbol.iterator]
+  };
 };
 
 module.exports = {createList};
